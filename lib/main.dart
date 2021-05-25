@@ -3,7 +3,7 @@ import 'package:paynow_bloc/paynow_bloc.dart';
 main()async{
   const String PAYNOW_INTEGRATION_ID = "";
   const String PAYNOW_INTEGRATION_KEY = "";
-  const String PAYNOW_EMAIL = 'ignertic@icloud.com';
+  // const String PAYNOW_EMAIL = 'ignertic@icloud.com';
   const String RESULT_URL = 'http:/google.com/q=yoursite';
   const String RETURN_URL = 'http://google.com/q=yoursite';
 

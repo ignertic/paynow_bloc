@@ -1,8 +1,8 @@
 name: paynow_bloc
-description: A new Flutter package project.
-version: 0.0.1
-author:
-homepage:
+description: Paynow as a Bloc
+version: 0.0.2
+author: Gishobert Gwenzi (SuperCode)
+homepage: https://github.com/ignertic
 
 environment:
   sdk: ">=2.7.0 <3.0.0"

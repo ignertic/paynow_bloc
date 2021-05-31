@@ -5,32 +5,42 @@ An extension of the [Paynow Package](https://pub.dev/packages/paynow) implemente
 
 _This package aims to improve integration of Payments (Paynow) by handling all the [Paynow](https://pub.dev/packages/paynow) requests and cleaning up under the hood. Focus on the UI side of things_
 
-*Bloc Knowledge Required. [Bloc package](https://pub.dev/packages/bloc)*
-All you have to do is
-    1. Initialize PaynowBloc like any other Bloc
-    2. Stream the cart list using the `StreamBuilder` widget
-    3. As any other Bloc, stream the PaynowStates. Only 4 are available:
-          * PaynowPaymentSuccessfulState
-            - Emitted when transaction is successful
+*Bloc Knowledge Required. [Bloc package](https://pub.dev/packages/bloc)
 
-          * PaynowPaymentFailureState
-            - Emitted when there is an error and also provides error information
 
-          * PaynowLoadingState
-            - Emitted when payment request is successful
-            - Contains information of the pending payment request [InitResponse]
+All you have to do is:
 
-          * PaynowInitialState
-            - The inittial state of the PaynowBloc
-            - Can be used to display the PAY button
+1. Initialize PaynowBloc like any other Bloc
+2. Stream the cart list using the StreamBuilder widget
+3. As any other Bloc, stream the PaynowStates. Only 4 are available:
 
-    4. Add Items to cart [PaynowCartItem] via event `AddItemToCartEvent`
-       * Remove item from cart by sending event `RemoveItemFromCartEvent`
+      * _PaynowPaymentSuccessfulState_
+        - Emitted when transaction is successful
 
-    5. Start checkout by sending event `PaynowCheckoutEvent`
+      * _PaynowPaymentFailureState_
+        - Emitted when there is an error and also provides error information
 
-    ### That's all you need to do, no more manually handling urls.
-    ### Every state except the initial will contain information of the transaction and the cart items `Map<PaynowCartItem, int>` or simply (item, quantity)
+      * _PaynowLoadingState_
+        - Emitted when payment request is successful
+        - Contains information of the pending payment request [InitResponse]
+
+      * _PaynowInitialState_
+        - The inittial state of the PaynowBloc
+        - Can be used to display the PAY button
+
+4. Add Items to cart [PaynowCartItem] via event `AddItemToCartEvent`
+   * Remove item from cart by sending event `RemoveItemFromCartEvent`
+
+5. Start checkout by sending event `PaynowCheckoutEvent`
+   * _PaynowCheckoutEvent_ takes _PaynowPaymentInfo_ as an argument
+   * _PaynowPaymentInfo_ will take the request information such as
+    - Reference
+    - Result Url (optional)
+    - Return Url (optional)
+    - Payment Method (web/express)
+
+### That's all you need to do, no more manually handling urls.
+### Every state contains information of the transaction and the cart items `Map<PaynowCartItem, int>` or simply (item, quantity)
 
 
 ### Features
@@ -40,6 +50,7 @@ All you have to do is
     * Streamable Cart List -> (great for animations)
 
 _if you decide to use this package, remove the paynow dependency in your project_
+
 ## Getting Started
 
 ### For a full example. Please refer to this functional e-commerce app example.

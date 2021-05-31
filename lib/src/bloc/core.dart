@@ -73,14 +73,16 @@ class PaynowBloc extends Bloc<PaynowEvent, PaynowState>{
             });
             await for (StatusResponse statusResponse in statusTransactionStream){
               print(statusResponse);
-              if (statusResponse.paid){
+              if (statusResponse.status == "Paid"){
                 // send event that transaction is compete
                 yield PaynowPaymentSuccessfulState(cartItems, statusResponse);
                 paynow.closeStream();
               }else if (statusResponse.status == "Cancelled"){
-                yield PaynowPaymentFailureState(cartItems, "Transaction was cancelled", response);
+                yield PaynowPaymentFailureState(cartItems, "Transaction was cancelled by the user", response);
                 paynow.closeStream();
-
+              }else if (statusResponse.status == "Failed"){
+                yield PaynowPaymentFailureState(cartItems, "Transaction Failed", response);
+                paynow.closeStream();
               }
             }
           }else{

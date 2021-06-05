@@ -1,20 +1,18 @@
+import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:paynow/paynow.dart';
 import 'package:paynow_bloc/src/events/events.dart';
 import 'package:paynow_bloc/src/models/payment_info.dart';
 import 'package:paynow_bloc/src/models/paynow_cart_item.dart';
-import 'package:paynow_bloc/src/repository/repository.dart';
 import 'package:paynow_bloc/src/states/states.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PaynowBloc extends Bloc<PaynowEvent, PaynowState>{
-  final Repository repository = Repository();
   final Paynow paynow;
 
-
-  Stream<Map<PaynowCartItem, int>> get cartStream => repository.cartCubit.stream;
-  Map<PaynowCartItem, int> get cartItems => state.cartItems;
-  double get total => repository.cartCubit.total;
+  final cartBroadcast = StreamController<Map<PaynowCartItem, int>>.broadcast();
+  get cartStream => cartBroadcast.stream;
+  double get total => state.total;
 
   PaynowBloc({
     this.paynow,
@@ -22,10 +20,11 @@ class PaynowBloc extends Bloc<PaynowEvent, PaynowState>{
   }) : super(initialState??PaynowInitialState({}));
 
 
+
   @override
   Future<Function> close() {
     // close the cartCubit
-    this.repository.cartCubit.close();
+    this.cartBroadcast.close();
     return super.close();
   }
 
@@ -35,19 +34,22 @@ class PaynowBloc extends Bloc<PaynowEvent, PaynowState>{
 
     if (event is AddItemToCartEvent){
       // add item to cart
-      repository.cartCubit.addItemToCart(event.paynowCartItem);
       state.addItemToCart(event.paynowCartItem);
-      yield state;
+      yield PaynowInitialState(
+        state.cartItems
+      );
     }else if (event is RemoveItemFromCartEvent){
-      repository.cartCubit.removeItemToCart(event.paynowCartItem);
       state.removeItemToCart(event.paynowCartItem);
-      yield state;
+      yield PaynowInitialState(
+        state.cartItems
+      );
     }else if (event is ClearCartEvent){
-      repository.cartCubit.clearCart();
       state.clearCart();
-      yield state;
+      yield PaynowInitialState(
+        state.cartItems
+      );
     }else if (event is PaynowCheckoutEvent){
-
+      // loading state
       paynow.returnUrl = event.paynowPaymentInfo.returnUrl??paynow.returnUrl;
       paynow.resultUrl = event.paynowPaymentInfo.resultUrl??paynow.resultUrl;
       final payment = paynow.createPayment(event.paynowPaymentInfo.reference, event.paynowPaymentInfo.authEmail);
@@ -58,6 +60,9 @@ class PaynowBloc extends Bloc<PaynowEvent, PaynowState>{
       switch (event.paynowPaymentInfo.paymentMethod){
         case PaynowPaymentMethod.web:
         // go on to checkout web
+          InitResponse initResponse;
+          // yield loading
+          yield PaynowLoadingState(state.cartItems, initResponse);
           final response = await paynow.send(payment);
           // yield state with instructions and other data
           yield PaynowLoadingState(state.cartItems, response);
@@ -75,18 +80,18 @@ class PaynowBloc extends Bloc<PaynowEvent, PaynowState>{
               print(statusResponse);
               if (statusResponse.status == "Paid"){
                 // send event that transaction is compete
-                yield PaynowPaymentSuccessfulState(cartItems, statusResponse);
+                yield PaynowPaymentSuccessfulState(state.cartItems, statusResponse);
                 paynow.closeStream();
               }else if (statusResponse.status == "Cancelled"){
-                yield PaynowPaymentFailureState(cartItems, "Transaction was cancelled by the user", response);
+                yield PaynowPaymentFailureState(state.cartItems, "Transaction was cancelled by the user", response);
                 paynow.closeStream();
               }else if (statusResponse.status == "Failed"){
-                yield PaynowPaymentFailureState(cartItems, "Transaction Failed", response);
+                yield PaynowPaymentFailureState(state.cartItems, "Transaction Failed", response);
                 paynow.closeStream();
               }
             }
           }else{
-            yield PaynowPaymentFailureState(cartItems, response.instructions, response);
+            yield PaynowPaymentFailureState(state.cartItems, response.instructions, response);
           }
 
           break;
@@ -106,20 +111,20 @@ class PaynowBloc extends Bloc<PaynowEvent, PaynowState>{
                 print(statusResponse);
                 if (statusResponse.paid){
                   // send event that transaction is compete
-                  yield PaynowPaymentSuccessfulState(cartItems, statusResponse);
+                  yield PaynowPaymentSuccessfulState(state.cartItems, statusResponse);
                   paynow.closeStream();
                 }else if (statusResponse.status == "Cancelled"){
-                  yield PaynowPaymentFailureState(cartItems, "Transaction was cancelled", response);
+                  yield PaynowPaymentFailureState(state.cartItems, "Transaction was cancelled", response);
                   paynow.closeStream();
                   break;
                 }
               }
             }else{
-              yield PaynowPaymentFailureState(cartItems, response.instructions, response);
+              yield PaynowPaymentFailureState(state.cartItems, response.instructions, response);
             }
 
           }catch (e){
-            yield PaynowPaymentFailureState(cartItems, e.toString(), response);
+            yield PaynowPaymentFailureState(state.cartItems, e.toString(), response);
           }
           // send request
           break;

@@ -17,3 +17,13 @@
 ## [0.0.2+3]
 
 * Fix transaction setting
+
+## [0.0.3]
+* Add cast Map<PaynowCartItem, int> in PaynowLoadingState
+* Removed redundant
+
+## [0.0.3+1]
+* Remove unnecessary files
+
+## [1.0.0]
+* Production Ready

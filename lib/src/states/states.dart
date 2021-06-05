@@ -7,10 +7,10 @@ class PaynowState {
 
   PaynowState(this.cartItems);
 
-  PaynowState copyWith({
+  PaynowState copyWith(instance, {
     Map<PaynowCartItem, int> cartItems
   }){
-    return PaynowState(
+    return instance(
         cartItems ?? this.cartItems
     );
   }
@@ -26,10 +26,9 @@ class PaynowState {
 
   removeItemToCart(PaynowCartItem item){
     if (this.cartItems.containsKey(item)){
-      this.cartItems[item] += 1;
-
+      this.cartItems[item] -= 1;
     }else{
-      this.cartItems[item] = 1;
+      this.cartItems.remove(item);
     }
   }
 
@@ -43,7 +42,7 @@ class PaynowState {
       total += item.price * quantity;
     });
 
-    return double.parse(total.toString());
+    return double.parse(total.toStringAsExponential(2));
   }
 }
 

@@ -227,7 +227,7 @@ _if you decide to use this package, remove the paynow dependency in your project
           // You can access the StatusResponse in this state
           // To be sure let's check
 
-          if (state.statusResponse.paid){
+          if (state.statusResponse.status == "Paid"){
             print("Great! You paid. Enjoy Premium");
           }else{
             print("This will never show");

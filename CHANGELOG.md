@@ -27,3 +27,6 @@
 
 ## [1.0.0]
 * Production Ready
+
+## [1.0.0+1] 
+* Change documentation

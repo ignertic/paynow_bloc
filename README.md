@@ -7,7 +7,7 @@ _This package aims to improve integration of Payments (Paynow) by handling all t
 
 *Bloc Knowledge Required. [Bloc package](https://pub.dev/packages/bloc)
 
-[See a full example of an ecommerce package here](https://github.com/ignertic/paynow_bloc)
+[See a full example of an ecommerce package here](https://github.com/ignertic/paynow_bloc_example)
 
 All you have to do is:
 

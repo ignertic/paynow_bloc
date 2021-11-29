@@ -5,8 +5,8 @@ import 'package:paynow/paynow.dart';
 import 'src/cart/bloc/cart.cubit.dart';
 import 'src/models/payment_info.dart';
 import 'src/paynow_bloc/bloc/core.dart';
-const String PAYNOW_INTEGRATION_ID = "6054";
-const String PAYNOW_INTEGRATION_KEY = "960ad10a-fc0c-403b-af14-e9520a50fbf4";
+const String PAYNOW_INTEGRATION_ID = "INTEGRATION_ID";
+const String PAYNOW_INTEGRATION_KEY = "INTEGRATION_KEY";
 const String PAYNOW_EMAIL = 'ignertic@icloud.com';
 const String RESULT_URL = 'http:/google.com/q=yoursite';
 const String RETURN_URL = 'http://google.com/q=yoursite';
@@ -28,13 +28,12 @@ main()async{
       integrationId: PAYNOW_INTEGRATION_ID,
       integrationKey: PAYNOW_INTEGRATION_KEY,
       authEmail: 'ignertic@icloud.com',
-      reference: 'SomeTeset',
+      reference: 'Some Test',
     ),
     cartRepository: repo,
   );
 
   bloc.stream.listen((state) {
-    print(state);
     if (state is PaynowFailedState){
       print(state.message);
     }else if (state is PaynowPendingState){

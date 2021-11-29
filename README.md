@@ -1,5 +1,3 @@
-# paynow_bloc
-
 ## Paynow Bloc
 An extension of the [Paynow Package](https://pub.dev/packages/paynow) implemented as a Bloc for easy payment integration with Paynow.
 
@@ -22,3 +20,6 @@ _This package aims to improve integration of Payments (Paynow) by handling all t
 An extension of the [Paynow Package](https://pub.dev/packages/paynow) implemented as a Bloc for easy payment integration with Paynow.
 
 _This package aims to improve integration of Payments (Paynow) by handling all the [Paynow](https://pub.dev/packages/paynow) requests and cleaning up under the hood. Focus on the UI side of things_
+
+### Snippet
+![Paynow Bloc Snippet](paynow_d.png)

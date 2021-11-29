@@ -85,7 +85,7 @@ class CartRepository{
     this.paynowCartItems.remove(cartItem);
   }
 
-  /// Adding [PaynowCartItems] to [Payment.items]
+  /// Adding [PaynowCartItem] to [Payment.items]
   /// [quantity]
   void addToCart(PaynowCartItem cartItem, { int? quantity }) {
     if (this.paynowCartItems.containsKey(cartItem)){

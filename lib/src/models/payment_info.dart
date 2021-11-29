@@ -6,7 +6,7 @@ enum PaynowPaymentMethod {
   /// For Web checkouts
   web,
 
-  /// For all expressh checkouts [Ecocash etc]
+  /// For all expressh checkouts (Ecocash etc)
   express
 }
 

@@ -195,6 +195,8 @@ class PaynowBuilderState extends State<PaynowBuilder>{
 
 }
 
+
+/// A simplfied function to start the payment from UI layer
 Future<PaynowPaymentResult> startPaynowPayment<E>(
   BuildContext context,
   {

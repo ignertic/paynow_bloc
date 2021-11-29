@@ -1,76 +1,230 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:paynow/models/models.dart';
+import 'package:paynow/paynow.dart';
 import 'package:paynow_bloc/src/cart/bloc/cart.cubit.dart';
+import 'package:paynow_bloc/src/models/payment_result.dart';
 import 'package:paynow_bloc/src/paynow_bloc/bloc/core.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../paynow_bloc.dart';
 
 
-class PaynowBuilder extends StatelessWidget{
+/// Widget using the [PaynowBloc] to gracefully handle the payment workflow.
+/// It handles all the logic behind the scenes
+/// You are only required to plug in your UI.
+/// Each Builder provides ready to use information about your cart.
+class PaynowBuilder extends StatefulWidget{
+
   PaynowBuilder({
     Key? key,
     required this.paynowConfig,
+    required this.paynowPaymentInfo,
+    required this.cartRepository,
     required this.onInitial,
     required this.onLoading,
     required this.onPending,
     required this.onSuccess,
-    required this.onFailed
+    required this.onFailed,
+    required this.checkoutButtonBuilder,
+    this.forceWebView = true,
+    this.forceSafariVC = false,
   }) : super(key: key);
 
-  final PaynowConfig paynowConfig;
+  /// Paynow Configurations
+  late final PaynowConfig paynowConfig;
 
-  final Widget Function(BuildContext context, PaynowInitialState initialState, CartState cart) onInitial;
-  final Widget Function(BuildContext context, PaynowPendingState pendingState, CartState cart) onPending;
-  final Widget Function(BuildContext context, PaynowLoadingState loadingState, CartState cart) onLoading;
-  final Widget Function(BuildContext context, PaynowSuccessState successState, CartState cart) onSuccess;
-  final Widget Function(BuildContext context, PaynowFailedState failedState, CartState cart) onFailed;
+  /// Cart repository for managing your cart
+  late final CartRepository cartRepository;
+
+  /// Information about the payment which includes the payment method
+  late final PaynowPaymentInfo paynowPaymentInfo;
+
+  /// This is the initial widget. Use case would be to use this as a checkout confirmation
+  late final Widget Function(BuildContext context, PaynowInitialState initialState, List<PaynowCartItem> cart) onInitial;
+
+  /// Showm when waiting for the user to complete the payment
+  late final Widget Function(BuildContext context, PaynowPendingState pendingState, List<PaynowCartItem> cart) onPending;
+
+  /// Shown when there is work being done under the hood.
+  /// Place your fancy loaders here
+  late final Widget Function(BuildContext context, PaynowLoadingState loadingState, List<PaynowCartItem> cart) onLoading;
+
+  /// Shown when user has successfully paid.
+  /// Place your success widgets here confirming transaction
+  late final Widget Function(BuildContext context, PaynowSuccessState successState, List<PaynowCartItem> cart) onSuccess;
+
+  /// Shown when something goes wrong
+  late final Widget Function(BuildContext context, PaynowFailedState failedState, List<PaynowCartItem> cart) onFailed;
+
+  /// This is the button for starting the payment
+  /// Decorate it as you like but do not forget to call paynowBloc.startPayment
+  final Widget Function(BuildContext context, PaynowBloc paynowBloc, CartRepository cartRepository) checkoutButtonBuilder;
+
+  /// WIP
+  late final bool forceWebView;
+  late final bool forceSafariVC;
+
+
+
+  @override
+  State<StatefulWidget> createState() {
+    // TODO: implement createState
+    return PaynowBuilderState();
+  }
+}
+class PaynowBuilderState extends State<PaynowBuilder>{
+  late final PaynowBloc paynowBloc;
+
+  @override
+  void initState(){
+    paynowBloc = PaynowBloc(
+      config: widget.paynowConfig,
+      cartRepository: widget.cartRepository
+    );
+
+    super.initState();
+  }
+
+  @override
+  void dispose(){
+    paynowBloc.close();
+    super.dispose();
+  }
+
 
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-    return RepositoryProvider(
-      create: (_)=>CartRepository(
-        paynowCartItems: <PaynowCartItem, int>{}
+    return Scaffold(
+      appBar: AppBar(
+         title: Text('PAYNOW'),
       ),
-      child: MultiBlocProvider(
-        providers: [
-          BlocProvider(
-            create: (_)
-              =>CartCubit(
-                cartRepository: context.read<CartRepository>()
-              ),
-          ),
-          BlocProvider(
-            create: (_)=>PaynowBloc(
-              config: paynowConfig,
-              cartRepository: context.read<CartRepository>()
+      floatingActionButton: widget.checkoutButtonBuilder(context, paynowBloc, widget.cartRepository),
+      body: RepositoryProvider(
+        create: (_)=>widget.cartRepository,
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider(
+              create: (_)
+                =>CartCubit(
+                  cartRepository: widget.cartRepository
+                ),
             ),
+            BlocProvider(
+              create: (_)=>paynowBloc,
+            ),
+          ],
+          child: BlocConsumer<PaynowBloc, PaynowState>(
+            listener: (context, state)async{
+              if (state is PaynowFailedState){
+                ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(
+                    backgroundColor: Colors.red,
+                    content: Text('${state.message}'),
+                  ));
+
+                await Future.delayed(Duration(seconds: 8));
+                Navigator.pop(context, PaynowPaymentResult(
+                  paid: false,
+                  statusResponse: state.statusResponse
+                ));
+              }else if (state is PaynowSuccessState){
+                ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(
+                    backgroundColor: Colors.greenAccent,
+                    content: Text('${state.statusResponse}'),
+                  ));
+
+
+                await Future.delayed(Duration(seconds: 8));
+                Navigator.pop(context, PaynowPaymentResult(
+                  paid: true,
+                  statusResponse: state.statusResponse
+                ));
+
+              }else if (state is PaynowPendingState){
+                if (state.currentStatus.toLowerCase() == 'initiating'){
+
+                  if (state.response.hasRedirect){
+                    // launch
+                    launch(
+
+                      state.response.redirectUrl!,
+                      enableJavaScript: true,
+                      enableDomStorage: true,
+                    );
+                  }else{
+                    ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(
+                      backgroundColor: Colors.amber,
+                      content: Text(state.response.instructions ?? 'Waiting for user action'),
+                    ));
+                  }
+                }
+              }
+            },
+            builder: (context, paynowState){
+              late Widget returnWidget;
+
+              if (paynowState is PaynowInitialState){
+                // show initial widget
+                returnWidget =  widget.onInitial(context, paynowState, widget.cartRepository.currentPaynowItems);
+              }else if (paynowState is PaynowLoadingState){
+                returnWidget =  widget.onLoading(context, paynowState, widget.cartRepository.currentPaynowItems);
+              }else if (paynowState is PaynowPendingState){
+                returnWidget =  widget.onPending(context, paynowState, widget.cartRepository.currentPaynowItems);
+              }else if (paynowState is PaynowSuccessState){
+                returnWidget =  widget.onSuccess(context, paynowState, widget.cartRepository.currentPaynowItems);
+              }else if (paynowState is PaynowFailedState){
+                returnWidget =  widget.onFailed(context, paynowState, widget.cartRepository.currentPaynowItems);
+              }else{
+                returnWidget =  Text('UnImplemented state $paynowState');
+              }
+
+              return AnimatedSwitcher(
+                child: returnWidget,
+                duration: Duration(milliseconds: 700),
+              );
+            },
           ),
-          // PaynowBloc(
-          //   config:
-          // )
-        ],
-        child: BlocBuilder<PaynowBloc, PaynowState>(
-          builder: (context, paynowState){
-
-            if (paynowState is PaynowInitialState){
-              // show initial widget
-              return onInitial(context, paynowState, context.watch<CartCubit>().state);
-            }else if (paynowState is PaynowLoadingState){
-              return onLoading(context, paynowState, context.watch<CartCubit>().state);
-            }else if (paynowState is PaynowPendingState){
-              return onPending(context, paynowState, context.watch<CartCubit>().state);
-            }else if (paynowState is PaynowSuccessState){
-              return onSuccess(context, paynowState, context.watch<CartCubit>().state);
-            }else if (paynowState is PaynowFailedState){
-              return onFailed(context, paynowState, context.watch<CartCubit>().state);
-            }else{
-              return Text('UnImplemented state $paynowState');
-            }
-          },
         ),
-      ),
 
+      ),
     );
   }
+
+}
+
+Future<PaynowPaymentResult> startPaynowPayment<E>(
+  BuildContext context,
+  {
+    required PaynowConfig paynowConfig,
+    required CartRepository cartRepository,
+    required PaynowPaymentInfo paynowPaymentInfo,
+    required Widget Function(BuildContext context, PaynowInitialState initialState, List<PaynowCartItem> cart) onInitial,
+    required Widget Function(BuildContext context, PaynowPendingState pendingState, List<PaynowCartItem> cart) onPending,
+    required Widget Function(BuildContext context, PaynowLoadingState loadingState, List<PaynowCartItem> cart) onLoading,
+    required Widget Function(BuildContext context, PaynowSuccessState successState, List<PaynowCartItem> cart) onSuccess,
+    required Widget Function(BuildContext context, PaynowFailedState failedState, List<PaynowCartItem> cart) onFailed,
+    required Widget Function(BuildContext context, PaynowBloc paynowBloc, CartRepository cartRepository) checkoutButtonBuilder,
+    bool? forceWebView,
+    bool? forceSafariVC,
+  }
+)async{
+  final result = await Navigator.of(context).push(MaterialPageRoute(
+    builder: (_)=>PaynowBuilder(
+      paynowConfig: paynowConfig,
+      paynowPaymentInfo: paynowPaymentInfo,
+      cartRepository: cartRepository,
+      onInitial: onInitial,
+      onLoading: onLoading,
+      onPending: onPending,
+      onSuccess: onSuccess,
+      onFailed: onFailed,
+      checkoutButtonBuilder: checkoutButtonBuilder,
+    )
+  ));
+
+  return result;
 
 }

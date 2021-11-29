@@ -2,6 +2,9 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:paynow/models/models.dart';
 
+
+/// A snapshot of the cart current state
+///
 class CartState extends Equatable{
   CartState({
     required this.cartItems,
@@ -16,10 +19,18 @@ class CartState extends Equatable{
     count: 0
   );
 
-
+  /// A Map using [PaynowCartItem] as keys
+  /// and [int] as value representing quantity
   final Map<PaynowCartItem, int> cartItems;
+
+  /// The total amount of the items in the cart
   final double total;
+
+  /// The number of unique [PaynowCartItem] instances
   final int count;
+
+  /// Returns a list of [PaynowCartItem] in the cart
+  /// Getter for [List<PaynowCartItem>]
   List<PaynowCartItem> get cartItemsList => cartItems.keys.toList().cast<PaynowCartItem>();
 
   CartState copyWith({
@@ -43,18 +54,18 @@ class CartState extends Equatable{
 
 class CartRepository{
   CartRepository({
-    required this.paynowCartItems
+    this.paynowCartItems = const <PaynowCartItem, int>{}
   });
 
   final Map<PaynowCartItem, int> paynowCartItems;
 
   /// Get List of current paynowCartItems
   List<PaynowCartItem> get currentPaynowItems => paynowCartItems.keys.toList().cast<PaynowCartItem>();
+
   /// Return Info of items in cart.
   String get info => this.paynowCartItems.keys.fold<String>('', (previous, item)=>previous+item.title);
 
   /// Total amount of items in cart.
-
   double get total => this.paynowCartItems.entries.fold<double>(
     0.0, (previous, item)
       => double.parse(
@@ -102,12 +113,19 @@ class CartRepository{
 
 }
 
+
+/// A cubit to manage the Cart
+/// Is streamable for state changes
 class CartCubit extends Cubit<CartState>{
+
   CartCubit({
     required this.cartRepository
   }) : super(CartState.initial());
+
+  /// A repository for [PaynowCartItem]
   final CartRepository cartRepository;
 
+  /// Refresh the cart
   void _reloadCart(){
     emit(state.copyWith(
       cartItems: cartRepository.paynowCartItems,

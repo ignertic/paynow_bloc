@@ -28,5 +28,13 @@
 ## [1.0.0]
 * Production Ready
 
-## [1.0.0+1] 
+## [1.0.0+1]
 * Change documentation
+
+## [2.0.0]
+* Refactored Bloc
+* New Cart Mechanisms
+* Simple Transaction Trigger
+
+## [2.0.1]
+* Add missing snippet

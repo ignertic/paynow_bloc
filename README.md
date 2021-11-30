@@ -22,4 +22,4 @@ An extension of the [Paynow Package](https://pub.dev/packages/paynow) implemente
 _This package aims to improve integration of Payments (Paynow) by handling all the [Paynow](https://pub.dev/packages/paynow) requests and cleaning up under the hood. Focus on the UI side of things_
 
 ### Snippet
-![Paynow Bloc Snippet](paynow_d.png)
+![Paynow Bloc Snippet](https://github.com/ignertic/paynow_bloc/raw/master/paynow_d.png)

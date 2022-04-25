@@ -1,7 +1,6 @@
 
 import 'package:paynow/paynow.dart' show MobilePaymentMethod;
-import 'package:paynow_bloc/src/cart/model/cart_item.model.dart';
-
+import '../../models/models.dart';
 import 'paynow_payment_method.model.dart';
 
 /// Containing Payment Information required during transaction

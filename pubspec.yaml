@@ -1,6 +1,6 @@
 name: paynow_bloc
 description: Paynow as a Bloc
-version: 2.0.1
+version: 4.0.0
 # author: Gishobert Gwenzi (SuperCode)
 homepage: https://github.com/ignertic
 
@@ -11,8 +11,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  bloc: ^7.2.1
-  flutter_bloc: ^7.3.3
+  bloc: ^8.0.3
+  flutter_bloc: ^8.0.1
   url_launcher: ^6.0.4
   logging: ^1.0.1
   paynow: ^3.0.2
@@ -21,8 +21,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  test: ^1.16.0
-  bloc_test: ^8.0.0
+
 
 
 

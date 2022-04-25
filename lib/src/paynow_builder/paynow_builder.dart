@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:paynow/paynow.dart';
-import 'package:paynow_bloc/src/cart/bloc/cart.cubit.dart';
+import 'package:paynow_bloc/src/cart/bloc/cart_bloc.dart';
 import 'package:paynow_bloc/src/models/payment_result.dart';
-import 'package:paynow_bloc/src/paynow_bloc/bloc/core.dart';
+import '../paynow_bloc/bloc/paynow_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../paynow_bloc.dart';
+import '../paynow_bloc/model/paynow_config.model.dart';
+import '../paynow_bloc/model/paynow_payment_info.model.dart';
 
 
 /// Widget using the [PaynowBloc] to gracefully handle the payment workflow.
@@ -78,8 +80,7 @@ class PaynowBuilderState extends State<PaynowBuilder>{
   @override
   void initState(){
     paynowBloc = PaynowBloc(
-      config: widget.paynowConfig,
-      cartRepository: widget.cartRepository
+      PaynowDevRepository(paynowConfig: widget.paynowConfig)
     );
 
     super.initState();
@@ -106,12 +107,12 @@ class PaynowBuilderState extends State<PaynowBuilder>{
           providers: [
             BlocProvider(
               create: (_)
-                =>CartCubit(
-                  cartRepository: widget.cartRepository
+                =>CartBloc(
+                  widget.cartRepository
                 ),
             ),
-            BlocProvider(
-              create: (_)=>paynowBloc,
+            BlocProvider.value(
+              value: paynowBloc,
             ),
           ],
           child: BlocConsumer<PaynowBloc, PaynowState>(
@@ -168,15 +169,15 @@ class PaynowBuilderState extends State<PaynowBuilder>{
 
               if (paynowState is PaynowInitialState){
                 // show initial widget
-                returnWidget =  widget.onInitial(context, paynowState, widget.cartRepository.currentPaynowItems);
+                returnWidget =  widget.onInitial(context, paynowState, widget.cartRepository.currentPaynowItems.toPaynowCartItems);
               }else if (paynowState is PaynowLoadingState){
-                returnWidget =  widget.onLoading(context, paynowState, widget.cartRepository.currentPaynowItems);
+                returnWidget =  widget.onLoading(context, paynowState, widget.cartRepository.currentPaynowItems.toPaynowCartItems);
               }else if (paynowState is PaynowPendingState){
-                returnWidget =  widget.onPending(context, paynowState, widget.cartRepository.currentPaynowItems);
+                returnWidget =  widget.onPending(context, paynowState, widget.cartRepository.currentPaynowItems.toPaynowCartItems);
               }else if (paynowState is PaynowSuccessState){
-                returnWidget =  widget.onSuccess(context, paynowState, widget.cartRepository.currentPaynowItems);
+                returnWidget =  widget.onSuccess(context, paynowState, widget.cartRepository.currentPaynowItems.toPaynowCartItems);
               }else if (paynowState is PaynowFailedState){
-                returnWidget =  widget.onFailed(context, paynowState, widget.cartRepository.currentPaynowItems);
+                returnWidget =  widget.onFailed(context, paynowState, widget.cartRepository.currentPaynowItems.toPaynowCartItems);
               }else{
                 returnWidget =  Text('UnImplemented state $paynowState');
               }
@@ -208,22 +209,29 @@ Future<PaynowPaymentResult> startPaynowPayment<E>(
     required Widget Function(BuildContext context, PaynowLoadingState loadingState, List<PaynowCartItem> cart) onLoading,
     required Widget Function(BuildContext context, PaynowSuccessState successState, List<PaynowCartItem> cart) onSuccess,
     required Widget Function(BuildContext context, PaynowFailedState failedState, List<PaynowCartItem> cart) onFailed,
-    required Widget Function(BuildContext context, PaynowBloc paynowBloc, CartRepository cartRepository) checkoutButtonBuilder,
+    // required Widget Function(BuildContext context, PaynowBloc paynowBloc, CartRepository cartRepository) checkoutButtonBuilder,
     bool? forceWebView,
     bool? forceSafariVC,
   }
 )async{
   final result = await Navigator.of(context).push(MaterialPageRoute(
     builder: (_)=>PaynowBuilder(
+      cartRepository: cartRepository,
       paynowConfig: paynowConfig,
       paynowPaymentInfo: paynowPaymentInfo,
-      cartRepository: cartRepository,
       onInitial: onInitial,
       onLoading: onLoading,
       onPending: onPending,
       onSuccess: onSuccess,
       onFailed: onFailed,
-      checkoutButtonBuilder: checkoutButtonBuilder,
+      checkoutButtonBuilder: (context, bloc, cart){
+        return ElevatedButton(
+            onPressed: (){
+              bloc.add(PaynowStartWebCheckoutEvent(paynowPaymentInfo: paynowPaymentInfo));
+            },
+            child: Text('PAY')
+        );
+      },
     )
   ));
 

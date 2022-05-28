@@ -17,7 +17,7 @@ final paynow = Paynow(
 
 main()async{
 
-  final cart = CartBloc(CartRepository());
+  final cart = CartBloc(CartRepository(cartItems: {}));
   final bloc = PaynowBloc(PaynowDevRepository(
     paynowConfig: PaynowConfig(
       integrationId: PAYNOW_INTEGRATION_ID,

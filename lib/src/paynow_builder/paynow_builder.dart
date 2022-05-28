@@ -144,23 +144,20 @@ class PaynowBuilderState extends State<PaynowBuilder>{
                 ));
 
               }else if (state is PaynowPendingState){
-                if (state.currentStatus.toLowerCase() == 'initiating'){
+                if (state.response.hasRedirect){
+                  // launch
+                  launch(
 
-                  if (state.response.hasRedirect){
-                    // launch
-                    launch(
-
-                      state.response.redirectUrl!,
-                      enableJavaScript: true,
-                      enableDomStorage: true,
-                    );
-                  }else{
-                    ScaffoldMessenger.of(context)
-                    .showSnackBar(SnackBar(
-                      backgroundColor: Colors.amber,
-                      content: Text(state.response.instructions ?? 'Waiting for user action'),
-                    ));
-                  }
+                    state.response.redirectUrl!,
+                    enableJavaScript: true,
+                    enableDomStorage: true,
+                  );
+                }else{
+                  ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(
+                    backgroundColor: Colors.amber,
+                    content: Text(state.response.instructions ?? 'Waiting for user action'),
+                  ));
                 }
               }
             },

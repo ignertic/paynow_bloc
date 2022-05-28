@@ -2,7 +2,7 @@ part of '../bloc/cart_bloc.dart';
 
 class CartRepository implements AbstractCartRepository{
   CartRepository({
-    this.cartItems = const <CartItem, int>{}
+    required this.cartItems
   });
 
   final Map<CartItem, int> cartItems;

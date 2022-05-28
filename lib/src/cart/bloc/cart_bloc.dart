@@ -4,7 +4,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:paynow/models/models.dart';
-import 'package:paynow_bloc/src/cart/model/cart_item.model.dart';
+import '../../models/models.dart' show CartItem;
 
 part 'cart_event.dart';
 part 'cart_state.dart';

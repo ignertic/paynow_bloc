@@ -32,6 +32,15 @@ class PaynowBloc extends Bloc<PaynowEvent, PaynowState> {
           PaynowPendingState(response: initResponse, currentStatus: 'Awaiting Payment')
         );
       }catch (e){
+        initResponse = InitResponse(
+          hasRedirect: false,
+          error: e.toString(),
+          redirectUrl: '',
+          pollUrl: '',
+          success: false,
+          hash: '',
+          instructions: ''
+        );
         emit(PaynowFailedState(message: e.toString(), statusResponse: StatusResponse(
           amount: 44.2.toString(),
           hash: 'invalid',
@@ -46,15 +55,26 @@ class PaynowBloc extends Bloc<PaynowEvent, PaynowState> {
     on<PaynowCheckPaymentStatusEvent>((event, emit)async{
       emit(PaynowLoadingState());
       final statusResponse = await paynowRepository.checkPaymentStatus(event.initResponse);
-      if ((statusResponse.status.toLowerCase()=='paid') || statusResponse.status.toLowerCase()=='awaiting delivery'){
-        emit(PaynowSuccessState(statusResponse: statusResponse));
-      }else{
-        emit(
-            PaynowPendingState(
-                response: event.initResponse,
-                currentStatus: 'Payment not yet confirmed'
-            ));
+      switch (statusResponse.status.toLowerCase()){
+        case 'paid':
+        case 'awaiting delivery':
+          emit(PaynowSuccessState(statusResponse: statusResponse));
+          break;
+
+        case 'cancelled':
+          emit(PaynowFailedState(
+            message: 'Transaction cancelled by the user',
+            statusResponse: statusResponse
+          ));
+          break;
+        case 'created':
+        case 'sent':
+          emit(PaynowPendingState(
+            response: event.initResponse,
+            currentStatus: 'Awaiting Transaction'
+          ));
       }
+
     });
   }
 }

@@ -16,7 +16,9 @@ dependencies:
   url_launcher:
   logging: ^1.0.1
   paynow:
-    path: '/home/supercode/dev/flutter/driving_school/packages/paynow'
+    git:
+    	url: https://github.com/ignertic/paynow
+    	ref: temp
   equatable:
 
 dev_dependencies:

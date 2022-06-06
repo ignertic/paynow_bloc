@@ -55,7 +55,7 @@ class PaynowBloc extends Bloc<PaynowEvent, PaynowState> {
     on<PaynowCheckPaymentStatusEvent>((event, emit)async{
       emit(PaynowLoadingState());
       final statusResponse = await paynowRepository.checkPaymentStatus(event.initResponse);
-      switch (statusResponse.status.toLowerCase()){
+      switch (statusResponse.status.toLowerCase().replaceAll('+', ' ')){
         case 'paid':
         case 'awaiting delivery':
           emit(PaynowSuccessState(statusResponse: statusResponse));
